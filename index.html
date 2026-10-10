@@ -126,6 +126,7 @@ input[type=file]{display:none}
 
 footer{padding:30px 0;color:var(--muted2);font-size:.77rem;text-align:center}
 </style>
+<base target="_blank">
 </head>
 <body>
 <div class="container">
@@ -223,7 +224,8 @@ footer{padding:30px 0;color:var(--muted2);font-size:.77rem;text-align:center}
 // ── STATE ──────────────────────────────────────────────
 let currentMode = 'original';
 let pickedFile = null;
-let lastBlobUrl = null; // FIX 3: track blob URL for revocation
+let lastBlobUrl = null; // track blob URL for revocation
+let pickedIsMov = false; // track if picked file is MOV for audio handling
 
 const SIZE_WARN = 100 * 1048576;  // 100 MB
 const SIZE_GATE = 400 * 1048576;  // 400 MB hard block
@@ -259,23 +261,37 @@ dz.addEventListener('drop', e => { if (e.dataTransfer.files[0]) pick(e.dataTrans
 fi.onchange = () => { if (fi.files[0]) pick(fi.files[0]); };
 
 function pick(file) {
-  // FIX 4: accept both mp4 and mov, flag mov for user awareness
+  // accept both mp4 and mov, flag mov for user awareness
   if (!/\.(mp4|mov)$/i.test(file.name)) {
+    // stale state fix: clear previous valid file on invalid drop
+    pickedFile = null;
+    pickedIsMov = false;
+    document.getElementById('runBtn').disabled = true;
+    document.getElementById('metaRow').style.display = 'none';
+    document.getElementById('doneBox').style.display = 'none';
+    document.getElementById('sizeGate').style.display = 'none';
+    fi.value = '';
     setStatus('<span style="color:#ff6b6b">&#x26A0; MP4 or MOV only.</span>'); return;
   }
 
   const isMov = /\.mov$/i.test(file.name);
 
-  // FIX 5: hard gate on size
+  // hard gate on size — stale state fix: clear on oversized drop too
   if (file.size > SIZE_GATE) {
+    pickedFile = null;
+    pickedIsMov = false;
     document.getElementById('sizeGate').style.display = 'block';
     document.getElementById('memWarn').style.display = 'none';
     document.getElementById('runBtn').disabled = true;
+    document.getElementById('metaRow').style.display = 'none';
+    document.getElementById('doneBox').style.display = 'none';
+    fi.value = '';
     setStatus('<span style="color:#ff6b6b">File too large to process.</span>');
     return;
   }
 
   pickedFile = file;
+  pickedIsMov = isMov;
   document.getElementById('sizeGate').style.display = 'none';
   document.getElementById('m-name').textContent = file.name.length > 16 ? file.name.slice(0,13)+'...' : file.name;
   document.getElementById('m-size').textContent = (file.size/1048576).toFixed(1)+' MB';
@@ -325,9 +341,6 @@ async function optimize() {
     URL.revokeObjectURL(lastBlobUrl);
     lastBlobUrl = null;
   }
-
-  // FIX 2: browser compatibility check
-  const hasSharedArrayBuffer = typeof SharedArrayBuffer !== 'undefined';
 
   // FIX 1: try primary CDN, fall back to unpkg if it fails
   const corePaths = [
@@ -390,7 +403,14 @@ async function optimize() {
 
     if (currentMode === 'original') {
       setStatus('Optimizing container &mdash; zero re-encode&hellip;');
-      args = ['-i','input.mp4','-c','copy','-map_metadata','-1','-movflags','+faststart','output.mp4'];
+      // MOV audio fix: iPhone/camera MOV files often carry PCM audio which is
+      // incompatible with MP4 container — re-encode audio to AAC for MOV inputs only
+      if (pickedIsMov) {
+        args = ['-i','input.mp4','-c:v','copy','-c:a','aac','-b:a','192k',
+                '-map_metadata','-1','-movflags','+faststart','output.mp4'];
+      } else {
+        args = ['-i','input.mp4','-c','copy','-map_metadata','-1','-movflags','+faststart','output.mp4'];
+      }
       outName = base+'_optimized.mp4';
 
     } else if (currentMode === 'enhanced') {
@@ -399,7 +419,8 @@ async function optimize() {
         '-i','input.mp4',
         '-vf','unsharp=luma_msize_x=5:luma_msize_y=5:luma_amount=1.2:chroma_msize_x=3:chroma_msize_y=3:chroma_amount=0.6,eq=contrast=1.08:saturation=1.12',
         '-c:v','libx264','-crf','18','-preset','fast',
-        '-c:a','copy',
+        // MOV files often carry PCM audio — re-encode to AAC for MP4 compatibility
+        ...(pickedIsMov ? ['-c:a','aac','-b:a','192k'] : ['-c:a','copy']),
         '-map_metadata','-1','-movflags','+faststart',
         'output.mp4'
       ];
@@ -411,7 +432,7 @@ async function optimize() {
         '-i','input.mp4',
         '-c:v','libx265','-crf','24','-preset','medium',
         '-tag:v','hvc1',
-        '-c:a','copy',
+        ...(pickedIsMov ? ['-c:a','aac','-b:a','192k'] : ['-c:a','copy']),
         '-map_metadata','-1','-movflags','+faststart',
         'output.mp4'
       ];
@@ -465,7 +486,7 @@ function setStatus(html){ document.getElementById('status').innerHTML = html; }
 
 function resetUI() {
   pickedFile = null;
-  // FIX 3: revoke blob on reset
+  pickedIsMov = false;
   if (lastBlobUrl) { URL.revokeObjectURL(lastBlobUrl); lastBlobUrl = null; }
   const fiEl = document.getElementById('fi');
   if (fiEl) fiEl.value = '';
