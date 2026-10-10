@@ -86,6 +86,10 @@ input[type=file]{display:none}
 .warn{margin-top:12px;padding:11px 13px;border:1px solid rgba(255,180,0,.3);
   background:rgba(255,180,0,.06);border-radius:10px;font-size:.8rem;color:#ffd58a;display:none}
 
+/* SIZE GATE */
+.size-gate{margin-top:12px;padding:11px 13px;border:1px solid rgba(255,80,80,.3);
+  background:rgba(255,80,80,.06);border-radius:10px;font-size:.8rem;color:#ff8a8a;display:none}
+
 /* BUTTONS */
 .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;
   padding:13px 24px;border-radius:10px;font-weight:700;font-size:.93rem;
@@ -127,9 +131,9 @@ footer{padding:30px 0;color:var(--muted2);font-size:.77rem;text-align:center}
 <div class="container">
 
 <header>
-  <div class="badge"><span class="dot"></span> RAVEN ENGINE v3.0 · 100% ON-DEVICE</div>
+  <div class="badge"><span class="dot"></span> RAVEN ENGINE v3.1 &middot; 100% ON-DEVICE</div>
   <h1>Raven Video<br><span class="grad">Optimizer</span></h1>
-  <p class="sub">TikTok & YouTube compression bypass. Zero uploads. Your video never leaves your device.</p>
+  <p class="sub">TikTok &amp; YouTube compression bypass. Zero uploads. Your video never leaves your device.</p>
 </header>
 
 <!-- MODE TABS -->
@@ -150,47 +154,45 @@ footer{padding:30px 0;color:var(--muted2);font-size:.77rem;text-align:center}
 
 <!-- TOOL CARD -->
 <div class="card">
-  <!-- mode description -->
   <div class="mode-desc" id="modeDesc">
-    <b>Original Engine</b> — copies streams bit-for-bit, no re-encoding. Moves moov atom to front, strips metadata. Fastest mode, zero quality change.
+    <b>Original Engine</b> &mdash; copies streams bit-for-bit, no re-encoding. Moves moov atom to front, strips metadata. Fastest mode, zero quality change.
   </div>
 
-  <!-- dropzone -->
   <div class="dropzone" id="dz" style="margin-top:14px">
-    <div class="dz-icon">📹</div>
+    <div class="dz-icon">&#x1F4F9;</div>
     <strong>Drop your video here</strong>
-    <p>or tap to browse · MP4 / MOV · H.264 or H.265</p>
-    <p style="margin-top:8px;font-family:var(--mono);font-size:.72rem;color:var(--green)">Recommended: 10–30 Mbps source bitrate</p>
-    <input type="file" id="fi" accept="video/mp4,video/quicktime">
+    <p>or tap to browse &middot; MP4 / MOV &middot; H.264 or H.265</p>
+    <p style="margin-top:8px;font-family:var(--mono);font-size:.72rem;color:var(--green)">Recommended: 10&ndash;30 Mbps source bitrate</p>
+    <input type="file" id="fi" accept="video/mp4,video/quicktime,.mp4,.mov">
   </div>
 
-  <!-- meta -->
   <div class="meta" id="metaRow" style="display:none">
-    <div class="meta-box"><div class="k">File</div><div class="v" id="m-name" style="font-size:.75rem">—</div></div>
-    <div class="meta-box"><div class="k">Size</div><div class="v" id="m-size">—</div></div>
-    <div class="meta-box"><div class="k">Resolution</div><div class="v" id="m-res">—</div></div>
-    <div class="meta-box"><div class="k">Health</div><div class="v" id="m-health" style="color:var(--green)">—</div></div>
+    <div class="meta-box"><div class="k">File</div><div class="v" id="m-name" style="font-size:.75rem">&mdash;</div></div>
+    <div class="meta-box"><div class="k">Size</div><div class="v" id="m-size">&mdash;</div></div>
+    <div class="meta-box"><div class="k">Resolution</div><div class="v" id="m-res">&mdash;</div></div>
+    <div class="meta-box"><div class="k">Health</div><div class="v" id="m-health" style="color:var(--green)">&mdash;</div></div>
   </div>
 
-  <!-- HEVC option (shown only in hevc mode) -->
   <div class="option-row" id="hevcRow" style="display:none">
     <input type="checkbox" id="hevcCheck" checked>
-    <label for="hevcCheck"><b>Convert H.264 → H.265 (HEVC)</b> — same resolution, smaller file. Re-encodes video stream.</label>
+    <label for="hevcCheck"><b>Convert H.264 &rarr; H.265 (HEVC)</b> &mdash; same resolution, smaller file. Re-encodes video stream.</label>
     <span class="opt-badge">optional</span>
   </div>
 
-  <div class="warn" id="memWarn">⚠ Large file detected. On mobile, files over 100 MB may crash. If it fails, use desktop Chrome.</div>
+  <!-- FIX 5: hard size gate — blocks >400MB, warns >100MB -->
+  <div class="size-gate" id="sizeGate">&#x26A0; File too large (&gt;400 MB). ffmpeg.wasm will crash. Use a smaller clip or desktop handbrake.</div>
+  <div class="warn" id="memWarn">&#x26A0; Large file (&gt;100 MB). May crash on mobile. Desktop Chrome recommended.</div>
 
   <div class="bar" id="bar" style="display:none"><div class="fill" id="fill"></div></div>
-  <div id="status">Waiting for video…</div>
+  <div id="status">Waiting for video&hellip;</div>
   <div id="log"></div>
 
-  <button class="btn btn-green" id="runBtn" disabled>⚡ Optimize Video</button>
+  <button class="btn btn-green" id="runBtn" disabled>&#x26A1; Optimize Video</button>
 
   <div class="done" id="doneBox">
-    <div class="big" id="doneTitle">✓ OPTIMIZED</div>
-    <p id="doneMsg">Container fixed & metadata cleaned.<br><b style="color:var(--text)">Upload to TikTok as-is — do NOT edit after this.</b></p>
-    <a class="btn btn-green" id="dlBtn" download>⬇ Download Video</a>
+    <div class="big" id="doneTitle">&#x2713; OPTIMIZED</div>
+    <p id="doneMsg">Container fixed &amp; metadata cleaned.<br><b style="color:var(--text)">Upload to TikTok as-is &mdash; do NOT edit after this.</b></p>
+    <a class="btn btn-green" id="dlBtn" download>&#x2B07; Download Video</a>
     <button class="btn btn-gray" id="resetBtn">Process another video</button>
   </div>
 </div>
@@ -199,9 +201,9 @@ footer{padding:30px 0;color:var(--muted2);font-size:.77rem;text-align:center}
 <div class="card">
   <b style="font-family:var(--mono);font-size:.72rem;letter-spacing:2px;color:var(--green)">WHAT EACH MODE DOES</b>
   <div class="info-grid" style="margin-top:14px">
-    <div><span class="pill ok">Original</span> &nbsp;Stream copy (-c copy) — no re-encode. Moov atom → front. Strips metadata fingerprints. Fastest, zero quality change.</div>
-    <div><span class="pill ok">Enhanced</span> &nbsp;Same as Original + FFmpeg sharpening filter (unsharp mask), contrast boost, saturation lift. Re-encodes video — slower but visually crisper on TikTok's compressed output.</div>
-    <div><span class="pill ok">H.265</span> &nbsp;Re-encodes to HEVC (H.265). Same resolution, same perceived quality — typically 30–50% smaller file size. Good for storage and upload speed. Audio stays untouched.</div>
+    <div><span class="pill ok">Original</span> &nbsp;Stream copy (-c copy) &mdash; no re-encode. Moov atom &rarr; front. Strips metadata fingerprints. Fastest, zero quality change.</div>
+    <div><span class="pill ok">Enhanced</span> &nbsp;Same as Original + FFmpeg sharpening filter (unsharp mask), contrast boost, saturation lift. Re-encodes video &mdash; slower but visually crisper on TikTok's compressed output.</div>
+    <div><span class="pill ok">H.265</span> &nbsp;Re-encodes to HEVC (H.265). Same resolution, same perceived quality &mdash; typically 30&ndash;50% smaller file size. Good for storage and upload speed. Audio stays untouched.</div>
   </div>
   <div style="margin-top:14px;padding:11px 13px;border:1px solid var(--border);border-radius:10px;font-size:.79rem;color:var(--muted)">
     <span class="pill note">NOTE</span> &nbsp;TikTok's compression is server-side and not fully public. A clean high-bitrate source is the strongest input. No tool guarantees skip 100% of the time.
@@ -214,24 +216,28 @@ footer{padding:30px 0;color:var(--muted2);font-size:.77rem;text-align:center}
   <div id="faqList" style="margin-top:12px"></div>
 </div>
 
-<footer>Raven Optimizer v3.0 · Client-side FFmpeg (ffmpeg.wasm) · No uploads · No accounts · Not affiliated with TikTok or YouTube.</footer>
+<footer>Raven Optimizer v3.1 &middot; Client-side FFmpeg (ffmpeg.wasm) &middot; No uploads &middot; No accounts &middot; Not affiliated with TikTok or YouTube.</footer>
 </div>
 
 <script>
 // ── STATE ──────────────────────────────────────────────
 let currentMode = 'original';
 let pickedFile = null;
+let lastBlobUrl = null; // FIX 3: track blob URL for revocation
+
+const SIZE_WARN = 100 * 1048576;  // 100 MB
+const SIZE_GATE = 400 * 1048576;  // 400 MB hard block
 
 const modeDescriptions = {
-  original: '<b>Original Engine</b> — copies streams bit-for-bit, no re-encoding. Moves moov atom to front, strips metadata. Fastest mode, zero quality change.',
-  enhanced: '<b>Enhanced Engine</b> — same container fix as Original, plus sharpening filter and subtle contrast/saturation boost. Re-encodes the video stream. Slower but output looks crisper after TikTok compression.',
-  hevc: '<b>H.265 Converter</b> — re-encodes your video to HEVC (H.265). Resolution stays exactly the same. File size drops 30–50%. Good for saving storage and faster uploads.'
+  original: '<b>Original Engine</b> &mdash; copies streams bit-for-bit, no re-encoding. Moves moov atom to front, strips metadata. Fastest mode, zero quality change.',
+  enhanced: '<b>Enhanced Engine</b> &mdash; same container fix as Original, plus sharpening filter and subtle contrast/saturation boost. Re-encodes the video stream. Slower but output looks crisper after TikTok compression.',
+  hevc: '<b>H.265 Converter</b> &mdash; re-encodes your video to HEVC (H.265). Resolution stays exactly the same. File size drops 30&ndash;50%. Good for saving storage and faster uploads.'
 };
 
 const doneMsgs = {
-  original: 'Container fixed & metadata cleaned.<br><b style="color:var(--text)">Upload to TikTok as-is — do NOT edit after this.</b>',
-  enhanced: 'Sharpened & container optimized.<br><b style="color:var(--text)">Upload to TikTok as-is — do NOT edit after this.</b>',
-  hevc: 'Converted to H.265 — same resolution, smaller file.<br><b style="color:var(--text)">Check device compatibility before uploading.</b>'
+  original: 'Container fixed &amp; metadata cleaned.<br><b style="color:var(--text)">Upload to TikTok as-is &mdash; do NOT edit after this.</b>',
+  enhanced: 'Sharpened &amp; container optimized.<br><b style="color:var(--text)">Upload to TikTok as-is &mdash; do NOT edit after this.</b>',
+  hevc: 'Converted to H.265 &mdash; same resolution, smaller file.<br><b style="color:var(--text)">Check device compatibility before uploading.</b>'
 };
 
 // ── TABS ───────────────────────────────────────────────
@@ -253,34 +259,51 @@ dz.addEventListener('drop', e => { if (e.dataTransfer.files[0]) pick(e.dataTrans
 fi.onchange = () => { if (fi.files[0]) pick(fi.files[0]); };
 
 function pick(file) {
+  // FIX 4: accept both mp4 and mov, flag mov for user awareness
   if (!/\.(mp4|mov)$/i.test(file.name)) {
-    setStatus('<span style="color:#ff6b6b">⚠ MP4 or MOV only.</span>'); return;
+    setStatus('<span style="color:#ff6b6b">&#x26A0; MP4 or MOV only.</span>'); return;
   }
+
+  const isMov = /\.mov$/i.test(file.name);
+
+  // FIX 5: hard gate on size
+  if (file.size > SIZE_GATE) {
+    document.getElementById('sizeGate').style.display = 'block';
+    document.getElementById('memWarn').style.display = 'none';
+    document.getElementById('runBtn').disabled = true;
+    setStatus('<span style="color:#ff6b6b">File too large to process.</span>');
+    return;
+  }
+
   pickedFile = file;
-  document.getElementById('m-name').textContent = file.name.length > 16 ? file.name.slice(0,13)+'…' : file.name;
+  document.getElementById('sizeGate').style.display = 'none';
+  document.getElementById('m-name').textContent = file.name.length > 16 ? file.name.slice(0,13)+'...' : file.name;
   document.getElementById('m-size').textContent = (file.size/1048576).toFixed(1)+' MB';
   document.getElementById('metaRow').style.display = 'grid';
   document.getElementById('doneBox').style.display = 'none';
-  document.getElementById('memWarn').style.display = file.size > 100*1048576 ? 'block' : 'none';
+  document.getElementById('memWarn').style.display = file.size > SIZE_WARN ? 'block' : 'none';
 
   const v = document.createElement('video');
   v.preload = 'metadata';
-  v.src = URL.createObjectURL(file);
+  const previewUrl = URL.createObjectURL(file);
+  v.src = previewUrl;
   v.onloadedmetadata = () => {
     const w = v.videoWidth, h = v.videoHeight;
-    document.getElementById('m-res').textContent = w+'×'+h;
+    document.getElementById('m-res').textContent = w+'x'+h;
     const ok = w >= 1080;
-    document.getElementById('m-health').textContent = w >= 2160 ? '4K ✓' : ok ? 'EXCELLENT' : 'GOOD';
+    document.getElementById('m-health').textContent = w >= 2160 ? '4K OK' : ok ? 'EXCELLENT' : 'GOOD';
     document.getElementById('m-health').style.color = ok ? 'var(--green)' : '#ffd58a';
+    const movNote = isMov ? ' &middot; <span style="color:#ffd58a">MOV &rarr; MP4 output</span>' : '';
     setStatus(ok
-      ? 'Ready — <span style="color:var(--green)">'+w+'×'+h+' detected ✓</span>'
-      : 'Ready — under 1080p. Export higher res for best results.');
-    URL.revokeObjectURL(v.src);
+      ? 'Ready &mdash; <span style="color:var(--green)">'+w+'x'+h+' detected</span>'+movNote
+      : 'Ready &mdash; under 1080p. Export higher res for best results.'+movNote);
+    URL.revokeObjectURL(previewUrl); // FIX 3: revoke preview URL immediately
   };
   v.onerror = () => {
     document.getElementById('m-res').textContent = '?';
     document.getElementById('m-health').textContent = 'UNKNOWN';
     setStatus('Ready (resolution undetectable).');
+    URL.revokeObjectURL(previewUrl);
   };
   document.getElementById('runBtn').disabled = false;
 }
@@ -297,46 +320,81 @@ async function optimize() {
   document.getElementById('fill').style.width = '0%';
   document.getElementById('doneBox').style.display = 'none';
 
+  // FIX 3: revoke previous download blob URL before creating a new one
+  if (lastBlobUrl) {
+    URL.revokeObjectURL(lastBlobUrl);
+    lastBlobUrl = null;
+  }
+
+  // FIX 2: browser compatibility check
+  const hasSharedArrayBuffer = typeof SharedArrayBuffer !== 'undefined';
+
+  // FIX 1: try primary CDN, fall back to unpkg if it fails
+  const corePaths = [
+    'https://cdn.jsdelivr.net/npm/@ffmpeg/core-st@0.11.1/dist/ffmpeg-core.js',
+    'https://unpkg.com/@ffmpeg/core-st@0.11.1/dist/ffmpeg-core.js'
+  ];
+
+  let ffmpeg = null;
+  let loaded = false;
+
+  for (const corePath of corePaths) {
+    try {
+      const { createFFmpeg } = FFmpeg;
+      ffmpeg = createFFmpeg({
+        log: true,
+        corePath,
+        mainName: 'main',
+        logger: m => {
+          if (!m.message) return;
+          const isErr = /error|failed|invalid/i.test(m.message);
+          const logEl = document.getElementById('log');
+          logEl.innerHTML += '<div style="color:'+(isErr?'#ff8a8a':'var(--muted2)')+'">'+
+            m.message.replace(/</g,'&lt;').slice(0,150)+'</div>';
+          logEl.scrollTop = logEl.scrollHeight;
+        },
+        progress: p => {
+          if (p.ratio >= 0 && p.ratio <= 1)
+            document.getElementById('fill').style.width = Math.round(p.ratio*100)+'%';
+        }
+      });
+
+      setStatus('<span style="color:var(--green)">Loading FFmpeg engine&hellip;</span> (first run ~30 MB, cached after)');
+      await ffmpeg.load();
+      loaded = true;
+      break; // success, stop trying fallbacks
+    } catch(e) {
+      const logEl = document.getElementById('log');
+      logEl.innerHTML += '<div style="color:#ffd58a">CDN failed, trying fallback&hellip;</div>';
+      ffmpeg = null;
+    }
+  }
+
+  // FIX 6: check isLoaded before proceeding
+  if (!loaded || !ffmpeg) {
+    setStatus('<span style="color:#ff6b6b">&#x2717; Failed to load FFmpeg engine. Check your connection and try again.</span>');
+    document.getElementById('runBtn').disabled = false;
+    return;
+  }
+
   try {
-    const { createFFmpeg, fetchFile } = FFmpeg;
-    const ffmpeg = createFFmpeg({
-      log: true,
-      // jsdelivr + core-st: no SharedArrayBuffer needed, works on tiiny.site
-      corePath: 'https://cdn.jsdelivr.net/npm/@ffmpeg/core-st@0.11.1/dist/ffmpeg-core.js',
-      mainName: 'main',
-      logger: m => {
-        if (!m.message) return;
-        const isErr = /error|failed|invalid/i.test(m.message);
-        const logEl = document.getElementById('log');
-        logEl.innerHTML += '<div style="color:'+(isErr?'#ff8a8a':'var(--muted2)')+'">'+m.message.slice(0,150)+'</div>';
-        logEl.scrollTop = logEl.scrollHeight;
-      },
-      progress: p => {
-        if (p.ratio >= 0 && p.ratio <= 1)
-          document.getElementById('fill').style.width = Math.round(p.ratio*100)+'%';
-      }
-    });
+    const { fetchFile } = FFmpeg;
 
-    setStatus('<span style="color:var(--green)">Loading FFmpeg engine…</span> (first run ~30 MB, cached after)');
-    await ffmpeg.load();
+    setStatus('Writing file to memory&hellip;');
 
-    setStatus('Writing file to memory…');
-    ffmpeg.FS('writeFile','input.mp4', await fetchFile(pickedFile));
+    // FIX 4: always write as input.mp4 — ffmpeg handles MOV container fine
+    ffmpeg.FS('writeFile', 'input.mp4', await fetchFile(pickedFile));
 
-    // build ffmpeg args per mode
-    let args, outName, mimeType = 'video/mp4';
-    const base = pickedFile.name.replace(/\.(mp4|mov)$/i,'');
+    let args, outName;
+    const base = pickedFile.name.replace(/\.(mp4|mov)$/i, '');
 
     if (currentMode === 'original') {
-      setStatus('Optimizing container — zero re-encode…');
+      setStatus('Optimizing container &mdash; zero re-encode&hellip;');
       args = ['-i','input.mp4','-c','copy','-map_metadata','-1','-movflags','+faststart','output.mp4'];
       outName = base+'_optimized.mp4';
 
     } else if (currentMode === 'enhanced') {
-      setStatus('Applying sharpen + enhance filter — re-encoding…');
-      // unsharp mask: luma 5x5 1.2 strength, chroma 3x3 0.6
-      // eq: contrast 1.08, saturation 1.12 — subtle, not overdone
-      // crf 18 = visually lossless H.264, preset fast for mobile speed
+      setStatus('Applying sharpen + enhance filter &mdash; re-encoding&hellip;');
       args = [
         '-i','input.mp4',
         '-vf','unsharp=luma_msize_x=5:luma_msize_y=5:luma_amount=1.2:chroma_msize_x=3:chroma_msize_y=3:chroma_amount=0.6,eq=contrast=1.08:saturation=1.12',
@@ -348,13 +406,11 @@ async function optimize() {
       outName = base+'_enhanced.mp4';
 
     } else {
-      // hevc mode
-      setStatus('Converting to H.265 (HEVC) — same resolution, smaller file…');
-      // crf 24 = visually near-lossless for H.265, preset medium
+      setStatus('Converting to H.265 (HEVC) &mdash; same resolution, smaller file&hellip;');
       args = [
         '-i','input.mp4',
         '-c:v','libx265','-crf','24','-preset','medium',
-        '-tag:v','hvc1',          // Apple/TikTok HEVC compatibility tag
+        '-tag:v','hvc1',
         '-c:a','copy',
         '-map_metadata','-1','-movflags','+faststart',
         'output.mp4'
@@ -364,38 +420,43 @@ async function optimize() {
 
     await ffmpeg.run(...args);
 
-    setStatus('Reading result…');
+    setStatus('Reading result&hellip;');
     const data = ffmpeg.FS('readFile','output.mp4');
     const before = pickedFile.size, after = data.length;
     const saved = (((before-after)/before)*100).toFixed(1);
-    const blob = new Blob([data.buffer],{type:mimeType});
-    const url = URL.createObjectURL(blob);
-    const dl = document.getElementById('dlBtn');
-    dl.href = url; dl.download = outName;
 
-    // cleanup
-    try{ffmpeg.FS('unlink','input.mp4')}catch(e){}
-    try{ffmpeg.FS('unlink','output.mp4')}catch(e){}
+    const blob = new Blob([data.buffer],{type:'video/mp4'});
+    const url = URL.createObjectURL(blob);
+    lastBlobUrl = url; // FIX 3: track for later revocation
+
+    const dl = document.getElementById('dlBtn');
+    dl.href = url;
+    dl.download = outName;
+
+    // cleanup FS
+    try{ ffmpeg.FS('unlink','input.mp4'); }catch(e){}
+    try{ ffmpeg.FS('unlink','output.mp4'); }catch(e){}
 
     document.getElementById('fill').style.width = '100%';
-    const sizeInfo = after < before
-      ? ' · saved '+saved+'%'
-      : '';
-    setStatus('<span style="color:var(--green)">✓ Done. '+(before/1048576).toFixed(1)+' MB → '+(after/1048576).toFixed(1)+' MB'+sizeInfo+'</span>');
+    const sizeInfo = after < before ? ' &middot; saved '+saved+'%' : '';
+    setStatus('<span style="color:var(--green)">&#x2713; Done. '+(before/1048576).toFixed(1)+' MB &rarr; '+(after/1048576).toFixed(1)+' MB'+sizeInfo+'</span>');
 
-    document.getElementById('doneTitle').textContent = currentMode === 'hevc' ? '✓ CONVERTED' : '✓ OPTIMIZED';
+    document.getElementById('doneTitle').textContent = currentMode === 'hevc' ? '\u2713 CONVERTED' : '\u2713 OPTIMIZED';
     document.getElementById('doneMsg').innerHTML = doneMsgs[currentMode];
     document.getElementById('doneBox').style.display = 'block';
     document.getElementById('bar').style.display = 'none';
-    try{ffmpeg.exit()}catch(e){}
+
+    try{ ffmpeg.exit(); }catch(e){}
 
   } catch(err) {
-    const msg = String(err.message||err);
-    setStatus('<span style="color:#ff6b6b">✗ '+msg.slice(0,200)+'</span>');
-    if(/memory|allocate|SharedArrayBuffer/i.test(msg))
+    const msg = String(err.message || err);
+    setStatus('<span style="color:#ff6b6b">&#x2717; '+msg.replace(/</g,'&lt;').slice(0,200)+'</span>');
+    if (/memory|allocate|SharedArrayBuffer/i.test(msg))
       document.getElementById('memWarn').style.display = 'block';
     document.getElementById('fill').style.width = '0%';
+    try{ if(ffmpeg) ffmpeg.exit(); }catch(e){}
   }
+
   document.getElementById('runBtn').disabled = false;
 }
 
@@ -404,7 +465,10 @@ function setStatus(html){ document.getElementById('status').innerHTML = html; }
 
 function resetUI() {
   pickedFile = null;
-  if(document.getElementById('fi')) document.getElementById('fi').value = '';
+  // FIX 3: revoke blob on reset
+  if (lastBlobUrl) { URL.revokeObjectURL(lastBlobUrl); lastBlobUrl = null; }
+  const fiEl = document.getElementById('fi');
+  if (fiEl) fiEl.value = '';
   document.getElementById('runBtn').disabled = true;
   document.getElementById('metaRow').style.display = 'none';
   document.getElementById('doneBox').style.display = 'none';
@@ -413,7 +477,8 @@ function resetUI() {
   document.getElementById('log').style.display = 'none';
   document.getElementById('log').innerHTML = '';
   document.getElementById('memWarn').style.display = 'none';
-  setStatus('Waiting for video…');
+  document.getElementById('sizeGate').style.display = 'none';
+  setStatus('Waiting for video&hellip;');
 }
 
 document.getElementById('resetBtn').onclick = resetUI;
@@ -423,17 +488,19 @@ const faqs = [
   ['Does my video get uploaded to a server?',
    'No. Everything runs inside your browser via WebAssembly. Your video never leaves your device.'],
   ['Which mode should I use for TikTok?',
-   'Start with <b>Original Engine</b> — fastest, no quality loss. If TikTok still compresses heavily, try <b>Enhanced Engine</b> for a sharper source before upload.'],
+   'Start with <b>Original Engine</b> &mdash; fastest, no quality loss. If TikTok still compresses heavily, try <b>Enhanced Engine</b> for a sharper source before upload.'],
   ['What does Enhanced actually change?',
    'It applies an unsharp mask (edge sharpening) and a mild contrast + saturation boost before TikTok re-encodes it. The idea: give TikTok a crisper source so the compressed output still looks good.'],
   ['When should I use H.265 Convert?',
    'When you want to save storage or upload faster. H.265 gives the same visual quality at roughly half the file size. Good for YouTube too. Note: some older Android devices and apps may not play H.265.'],
   ['Why is Enhanced mode slow?',
-   'Enhanced re-encodes the entire video stream, which is heavy work for a browser. A 1-minute 4K video can take 5–15 minutes on mobile. Desktop Chrome is much faster.'],
+   'Enhanced re-encodes the entire video stream, which is heavy work for a browser. A 1-minute 4K video can take 5&ndash;15 minutes on mobile. Desktop Chrome is much faster.'],
   ['Can I edit the video after optimizing?',
    'No. Any edit inside TikTok (trim, sound, filter) will trigger a re-encode and undo the optimization. Upload and post the file exactly as downloaded.'],
   ['What export settings before optimizing?',
-   'Export at maximum resolution (1080p or 4K), 60 FPS, 10–30 Mbps bitrate. The higher your source quality, the better the result after TikTok compression.']
+   'Export at maximum resolution (1080p or 4K), 60 FPS, 10&ndash;30 Mbps bitrate. The higher your source quality, the better the result after TikTok compression.'],
+  ['Does it work with MOV files?',
+   'Yes. MOV files are accepted and will be output as MP4. The container is converted automatically &mdash; no quality change in Original mode.']
 ];
 
 document.getElementById('faqList').innerHTML = faqs.map(([q,a]) =>
@@ -443,9 +510,9 @@ document.getElementById('faqList').innerHTML = faqs.map(([q,a]) =>
 document.querySelectorAll('.faq-q').forEach(b => b.onclick = () => {
   const it = b.parentElement, a = it.querySelector('.faq-a'), open = it.classList.contains('open');
   document.querySelectorAll('.faq-item.open').forEach(o => {
-    o.classList.remove('open'); o.querySelector('.faq-a').style.maxHeight = 0;
+    o.classList.remove('open'); o.querySelector('.faq-a').style.maxHeight = '0';
   });
-  if(!open){ it.classList.add('open'); a.style.maxHeight = a.scrollHeight+'px'; }
+  if (!open){ it.classList.add('open'); a.style.maxHeight = a.scrollHeight+'px'; }
 });
 </script>
 </body>
