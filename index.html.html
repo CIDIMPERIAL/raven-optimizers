@@ -1,0 +1,452 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Raven Video Optimizer</title>
+<script src="https://cdn.jsdelivr.net/npm/@ffmpeg/ffmpeg@0.11.6/dist/ffmpeg.min.js"></script>
+<style>
+:root{
+  --bg:#0a0c10;--card:#13171e;--border:#1e2530;--border2:#2a3340;
+  --green:#00ff88;--green-dim:rgba(0,255,136,.10);--green-glow:rgba(0,255,136,.25);
+  --text:#dde3ed;--muted:#7a8694;--muted2:#4a555f;
+  --radius:14px;--font:'Segoe UI',system-ui,sans-serif;--mono:'JetBrains Mono',Consolas,monospace;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:var(--bg);color:var(--text);font-family:var(--font);line-height:1.6;min-height:100vh}
+.container{max-width:720px;margin:0 auto;padding:0 18px 60px}
+
+/* HEADER */
+header{padding:52px 0 28px;text-align:center;position:relative}
+header::before{content:'';position:absolute;top:-120px;left:50%;transform:translateX(-50%);
+  width:560px;height:360px;background:radial-gradient(ellipse,rgba(0,255,136,.07),transparent 68%);pointer-events:none}
+.badge{display:inline-flex;align-items:center;gap:7px;padding:5px 13px;
+  border:1px solid var(--border2);border-radius:100px;font-size:.75rem;color:var(--muted);
+  background:var(--card);margin-bottom:18px;font-family:var(--mono)}
+.dot{width:6px;height:6px;background:var(--green);border-radius:50%;
+  box-shadow:0 0 7px var(--green);animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+h1{font-size:clamp(1.7rem,5.5vw,2.6rem);font-weight:800;letter-spacing:-.8px;line-height:1.1}
+.grad{background:linear-gradient(90deg,var(--green),#00cfff);-webkit-background-clip:text;background-clip:text;color:transparent}
+.sub{color:var(--muted);max-width:480px;margin:12px auto 0;font-size:.9rem}
+
+/* TABS */
+.tabs{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:24px;
+  background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:6px}
+.tab{padding:10px 6px;border:none;border-radius:10px;background:none;color:var(--muted);
+  font-family:var(--font);font-size:.82rem;font-weight:600;cursor:pointer;transition:.2s;text-align:center;line-height:1.3}
+.tab span{display:block;font-size:.68rem;font-family:var(--mono);margin-top:2px;opacity:.7}
+.tab.active{background:var(--green);color:#000}
+.tab.active span{opacity:.7}
+
+/* CARD */
+.card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:22px;margin-top:16px}
+
+/* DROPZONE */
+.dropzone{border:2px dashed var(--border2);border-radius:var(--radius);padding:40px 20px;
+  text-align:center;cursor:pointer;transition:.2s;background:#0d1017;position:relative}
+.dropzone:hover,.dropzone.drag{border-color:var(--green);background:var(--green-dim)}
+.dz-icon{font-size:2rem;margin-bottom:10px}
+.dropzone p{color:var(--muted);font-size:.83rem;margin-top:5px}
+input[type=file]{display:none}
+
+/* META */
+.meta{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-top:16px}
+.meta-box{background:#0d1017;border:1px solid var(--border);border-radius:10px;padding:11px;text-align:center}
+.meta-box .k{font-size:.65rem;text-transform:uppercase;letter-spacing:1px;color:var(--muted2);margin-bottom:3px}
+.meta-box .v{font-family:var(--mono);font-weight:700;font-size:.9rem}
+
+/* HEVC OPTION */
+.option-row{display:flex;align-items:center;gap:10px;margin-top:14px;padding:12px 14px;
+  border:1px solid var(--border2);border-radius:10px;background:#0d1017;cursor:pointer;transition:.2s}
+.option-row:hover{border-color:var(--green)}
+.option-row input[type=checkbox]{width:16px;height:16px;accent-color:var(--green);cursor:pointer;flex-shrink:0}
+.option-row label{font-size:.85rem;color:var(--muted);cursor:pointer;user-select:none}
+.option-row label b{color:var(--text)}
+.option-row .opt-badge{margin-left:auto;padding:2px 8px;border-radius:100px;
+  font-size:.65rem;font-family:var(--mono);font-weight:700;
+  background:rgba(0,207,255,.1);color:#00cfff;border:1px solid rgba(0,207,255,.25);white-space:nowrap}
+
+/* MODE DESC */
+.mode-desc{margin-top:14px;padding:12px 14px;border:1px solid var(--border);
+  border-radius:10px;font-size:.82rem;color:var(--muted);line-height:1.6}
+.mode-desc b{color:var(--text)}
+
+/* PROGRESS */
+.bar{height:7px;background:#0d1017;border-radius:100px;overflow:hidden;
+  border:1px solid var(--border);margin-top:16px}
+.bar .fill{height:100%;width:0%;background:linear-gradient(90deg,var(--green),#00cfff);
+  border-radius:100px;transition:width .2s}
+#status{margin-top:10px;font-family:var(--mono);font-size:.76rem;color:var(--muted);min-height:18px;text-align:center}
+#log{margin-top:12px;background:#080b0f;border:1px solid var(--border);border-radius:10px;
+  padding:10px;font-family:var(--mono);font-size:.66rem;color:var(--muted2);
+  max-height:120px;overflow-y:auto;display:none;line-height:1.7}
+
+/* WARN */
+.warn{margin-top:12px;padding:11px 13px;border:1px solid rgba(255,180,0,.3);
+  background:rgba(255,180,0,.06);border-radius:10px;font-size:.8rem;color:#ffd58a;display:none}
+
+/* BUTTONS */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;
+  padding:13px 24px;border-radius:10px;font-weight:700;font-size:.93rem;
+  cursor:pointer;border:none;font-family:inherit;transition:.2s;width:100%}
+.btn-green{background:var(--green);color:#000;margin-top:14px}
+.btn-green:hover:not(:disabled){box-shadow:0 0 22px var(--green-glow)}
+.btn-green:disabled{opacity:.38;cursor:not-allowed}
+.btn-gray{background:#181e27;color:var(--text);border:1px solid var(--border2);margin-top:8px}
+
+/* DONE */
+.done{display:none;text-align:center;padding:14px 0 4px}
+.done .big{font-size:1.4rem;font-weight:800;color:var(--green);font-family:var(--mono)}
+.done p{color:var(--muted);font-size:.83rem;margin:7px 0 14px}
+
+/* PILLS */
+.pill{display:inline-block;padding:3px 9px;border-radius:100px;font-family:var(--mono);font-size:.68rem;font-weight:700}
+.pill.ok{background:var(--green-dim);color:var(--green);border:1px solid rgba(0,255,136,.22)}
+.pill.note{background:rgba(255,180,0,.1);color:#ffd58a;border:1px solid rgba(255,180,0,.28)}
+
+/* INFO CARD */
+.info-grid{display:grid;gap:10px;margin-top:12px;font-size:.84rem;color:var(--muted)}
+
+/* FAQ */
+.faq-item{border:1px solid var(--border);border-radius:11px;margin-bottom:8px;
+  background:var(--card);overflow:hidden}
+.faq-q{width:100%;background:none;border:none;color:var(--text);font-family:inherit;
+  font-size:.88rem;font-weight:600;text-align:left;padding:15px 17px;cursor:pointer;
+  display:flex;justify-content:space-between;align-items:center;gap:12px}
+.faq-q:hover{color:var(--green)}
+.chev{color:var(--muted);transition:.25s;flex-shrink:0}
+.faq-item.open .chev{transform:rotate(45deg);color:var(--green)}
+.faq-a{max-height:0;overflow:hidden;transition:max-height .3s;color:var(--muted);font-size:.84rem}
+.faq-a p{padding:0 17px 14px}
+
+footer{padding:30px 0;color:var(--muted2);font-size:.77rem;text-align:center}
+</style>
+</head>
+<body>
+<div class="container">
+
+<header>
+  <div class="badge"><span class="dot"></span> RAVEN ENGINE v3.0 · 100% ON-DEVICE</div>
+  <h1>Raven Video<br><span class="grad">Optimizer</span></h1>
+  <p class="sub">TikTok & YouTube compression bypass. Zero uploads. Your video never leaves your device.</p>
+</header>
+
+<!-- MODE TABS -->
+<div class="tabs">
+  <button class="tab active" data-mode="original" onclick="setMode('original')">
+    Original Engine
+    <span>Container fix only</span>
+  </button>
+  <button class="tab" data-mode="enhanced" onclick="setMode('enhanced')">
+    Enhanced Engine
+    <span>Sharpen + fix</span>
+  </button>
+  <button class="tab" data-mode="hevc" onclick="setMode('hevc')">
+    H.265 Convert
+    <span>Smaller file size</span>
+  </button>
+</div>
+
+<!-- TOOL CARD -->
+<div class="card">
+  <!-- mode description -->
+  <div class="mode-desc" id="modeDesc">
+    <b>Original Engine</b> — copies streams bit-for-bit, no re-encoding. Moves moov atom to front, strips metadata. Fastest mode, zero quality change.
+  </div>
+
+  <!-- dropzone -->
+  <div class="dropzone" id="dz" style="margin-top:14px">
+    <div class="dz-icon">📹</div>
+    <strong>Drop your video here</strong>
+    <p>or tap to browse · MP4 / MOV · H.264 or H.265</p>
+    <p style="margin-top:8px;font-family:var(--mono);font-size:.72rem;color:var(--green)">Recommended: 10–30 Mbps source bitrate</p>
+    <input type="file" id="fi" accept="video/mp4,video/quicktime">
+  </div>
+
+  <!-- meta -->
+  <div class="meta" id="metaRow" style="display:none">
+    <div class="meta-box"><div class="k">File</div><div class="v" id="m-name" style="font-size:.75rem">—</div></div>
+    <div class="meta-box"><div class="k">Size</div><div class="v" id="m-size">—</div></div>
+    <div class="meta-box"><div class="k">Resolution</div><div class="v" id="m-res">—</div></div>
+    <div class="meta-box"><div class="k">Health</div><div class="v" id="m-health" style="color:var(--green)">—</div></div>
+  </div>
+
+  <!-- HEVC option (shown only in hevc mode) -->
+  <div class="option-row" id="hevcRow" style="display:none">
+    <input type="checkbox" id="hevcCheck" checked>
+    <label for="hevcCheck"><b>Convert H.264 → H.265 (HEVC)</b> — same resolution, smaller file. Re-encodes video stream.</label>
+    <span class="opt-badge">optional</span>
+  </div>
+
+  <div class="warn" id="memWarn">⚠ Large file detected. On mobile, files over 100 MB may crash. If it fails, use desktop Chrome.</div>
+
+  <div class="bar" id="bar" style="display:none"><div class="fill" id="fill"></div></div>
+  <div id="status">Waiting for video…</div>
+  <div id="log"></div>
+
+  <button class="btn btn-green" id="runBtn" disabled>⚡ Optimize Video</button>
+
+  <div class="done" id="doneBox">
+    <div class="big" id="doneTitle">✓ OPTIMIZED</div>
+    <p id="doneMsg">Container fixed & metadata cleaned.<br><b style="color:var(--text)">Upload to TikTok as-is — do NOT edit after this.</b></p>
+    <a class="btn btn-green" id="dlBtn" download>⬇ Download Video</a>
+    <button class="btn btn-gray" id="resetBtn">Process another video</button>
+  </div>
+</div>
+
+<!-- WHAT IT DOES -->
+<div class="card">
+  <b style="font-family:var(--mono);font-size:.72rem;letter-spacing:2px;color:var(--green)">WHAT EACH MODE DOES</b>
+  <div class="info-grid" style="margin-top:14px">
+    <div><span class="pill ok">Original</span> &nbsp;Stream copy (-c copy) — no re-encode. Moov atom → front. Strips metadata fingerprints. Fastest, zero quality change.</div>
+    <div><span class="pill ok">Enhanced</span> &nbsp;Same as Original + FFmpeg sharpening filter (unsharp mask), contrast boost, saturation lift. Re-encodes video — slower but visually crisper on TikTok's compressed output.</div>
+    <div><span class="pill ok">H.265</span> &nbsp;Re-encodes to HEVC (H.265). Same resolution, same perceived quality — typically 30–50% smaller file size. Good for storage and upload speed. Audio stays untouched.</div>
+  </div>
+  <div style="margin-top:14px;padding:11px 13px;border:1px solid var(--border);border-radius:10px;font-size:.79rem;color:var(--muted)">
+    <span class="pill note">NOTE</span> &nbsp;TikTok's compression is server-side and not fully public. A clean high-bitrate source is the strongest input. No tool guarantees skip 100% of the time.
+  </div>
+</div>
+
+<!-- FAQ -->
+<div class="card">
+  <b style="font-family:var(--mono);font-size:.72rem;letter-spacing:2px;color:var(--green)">FAQ</b>
+  <div id="faqList" style="margin-top:12px"></div>
+</div>
+
+<footer>Raven Optimizer v3.0 · Client-side FFmpeg (ffmpeg.wasm) · No uploads · No accounts · Not affiliated with TikTok or YouTube.</footer>
+</div>
+
+<script>
+// ── STATE ──────────────────────────────────────────────
+let currentMode = 'original';
+let pickedFile = null;
+
+const modeDescriptions = {
+  original: '<b>Original Engine</b> — copies streams bit-for-bit, no re-encoding. Moves moov atom to front, strips metadata. Fastest mode, zero quality change.',
+  enhanced: '<b>Enhanced Engine</b> — same container fix as Original, plus sharpening filter and subtle contrast/saturation boost. Re-encodes the video stream. Slower but output looks crisper after TikTok compression.',
+  hevc: '<b>H.265 Converter</b> — re-encodes your video to HEVC (H.265). Resolution stays exactly the same. File size drops 30–50%. Good for saving storage and faster uploads.'
+};
+
+const doneMsgs = {
+  original: 'Container fixed & metadata cleaned.<br><b style="color:var(--text)">Upload to TikTok as-is — do NOT edit after this.</b>',
+  enhanced: 'Sharpened & container optimized.<br><b style="color:var(--text)">Upload to TikTok as-is — do NOT edit after this.</b>',
+  hevc: 'Converted to H.265 — same resolution, smaller file.<br><b style="color:var(--text)">Check device compatibility before uploading.</b>'
+};
+
+// ── TABS ───────────────────────────────────────────────
+function setMode(mode) {
+  currentMode = mode;
+  document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.dataset.mode === mode));
+  document.getElementById('modeDesc').innerHTML = modeDescriptions[mode];
+  document.getElementById('hevcRow').style.display = mode === 'hevc' ? 'flex' : 'none';
+  resetUI();
+}
+
+// ── DROP / PICK ────────────────────────────────────────
+const dz = document.getElementById('dz');
+const fi = document.getElementById('fi');
+dz.onclick = () => fi.click();
+['dragover','dragenter'].forEach(ev => dz.addEventListener(ev, e => { e.preventDefault(); dz.classList.add('drag'); }));
+['dragleave','drop'].forEach(ev => dz.addEventListener(ev, e => { e.preventDefault(); dz.classList.remove('drag'); }));
+dz.addEventListener('drop', e => { if (e.dataTransfer.files[0]) pick(e.dataTransfer.files[0]); });
+fi.onchange = () => { if (fi.files[0]) pick(fi.files[0]); };
+
+function pick(file) {
+  if (!/\.(mp4|mov)$/i.test(file.name)) {
+    setStatus('<span style="color:#ff6b6b">⚠ MP4 or MOV only.</span>'); return;
+  }
+  pickedFile = file;
+  document.getElementById('m-name').textContent = file.name.length > 16 ? file.name.slice(0,13)+'…' : file.name;
+  document.getElementById('m-size').textContent = (file.size/1048576).toFixed(1)+' MB';
+  document.getElementById('metaRow').style.display = 'grid';
+  document.getElementById('doneBox').style.display = 'none';
+  document.getElementById('memWarn').style.display = file.size > 100*1048576 ? 'block' : 'none';
+
+  const v = document.createElement('video');
+  v.preload = 'metadata';
+  v.src = URL.createObjectURL(file);
+  v.onloadedmetadata = () => {
+    const w = v.videoWidth, h = v.videoHeight;
+    document.getElementById('m-res').textContent = w+'×'+h;
+    const ok = w >= 1080;
+    document.getElementById('m-health').textContent = w >= 2160 ? '4K ✓' : ok ? 'EXCELLENT' : 'GOOD';
+    document.getElementById('m-health').style.color = ok ? 'var(--green)' : '#ffd58a';
+    setStatus(ok
+      ? 'Ready — <span style="color:var(--green)">'+w+'×'+h+' detected ✓</span>'
+      : 'Ready — under 1080p. Export higher res for best results.');
+    URL.revokeObjectURL(v.src);
+  };
+  v.onerror = () => {
+    document.getElementById('m-res').textContent = '?';
+    document.getElementById('m-health').textContent = 'UNKNOWN';
+    setStatus('Ready (resolution undetectable).');
+  };
+  document.getElementById('runBtn').disabled = false;
+}
+
+// ── CORE OPTIMIZE ──────────────────────────────────────
+document.getElementById('runBtn').onclick = optimize;
+
+async function optimize() {
+  if (!pickedFile) return;
+  document.getElementById('runBtn').disabled = true;
+  document.getElementById('bar').style.display = 'block';
+  document.getElementById('log').style.display = 'block';
+  document.getElementById('log').innerHTML = '';
+  document.getElementById('fill').style.width = '0%';
+  document.getElementById('doneBox').style.display = 'none';
+
+  try {
+    const { createFFmpeg, fetchFile } = FFmpeg;
+    const ffmpeg = createFFmpeg({
+      log: true,
+      // jsdelivr + core-st: no SharedArrayBuffer needed, works on tiiny.site
+      corePath: 'https://cdn.jsdelivr.net/npm/@ffmpeg/core-st@0.11.1/dist/ffmpeg-core.js',
+      mainName: 'main',
+      logger: m => {
+        if (!m.message) return;
+        const isErr = /error|failed|invalid/i.test(m.message);
+        const logEl = document.getElementById('log');
+        logEl.innerHTML += '<div style="color:'+(isErr?'#ff8a8a':'var(--muted2)')+'">'+m.message.slice(0,150)+'</div>';
+        logEl.scrollTop = logEl.scrollHeight;
+      },
+      progress: p => {
+        if (p.ratio >= 0 && p.ratio <= 1)
+          document.getElementById('fill').style.width = Math.round(p.ratio*100)+'%';
+      }
+    });
+
+    setStatus('<span style="color:var(--green)">Loading FFmpeg engine…</span> (first run ~30 MB, cached after)');
+    await ffmpeg.load();
+
+    setStatus('Writing file to memory…');
+    ffmpeg.FS('writeFile','input.mp4', await fetchFile(pickedFile));
+
+    // build ffmpeg args per mode
+    let args, outName, mimeType = 'video/mp4';
+    const base = pickedFile.name.replace(/\.(mp4|mov)$/i,'');
+
+    if (currentMode === 'original') {
+      setStatus('Optimizing container — zero re-encode…');
+      args = ['-i','input.mp4','-c','copy','-map_metadata','-1','-movflags','+faststart','output.mp4'];
+      outName = base+'_optimized.mp4';
+
+    } else if (currentMode === 'enhanced') {
+      setStatus('Applying sharpen + enhance filter — re-encoding…');
+      // unsharp mask: luma 5x5 1.2 strength, chroma 3x3 0.6
+      // eq: contrast 1.08, saturation 1.12 — subtle, not overdone
+      // crf 18 = visually lossless H.264, preset fast for mobile speed
+      args = [
+        '-i','input.mp4',
+        '-vf','unsharp=luma_msize_x=5:luma_msize_y=5:luma_amount=1.2:chroma_msize_x=3:chroma_msize_y=3:chroma_amount=0.6,eq=contrast=1.08:saturation=1.12',
+        '-c:v','libx264','-crf','18','-preset','fast',
+        '-c:a','copy',
+        '-map_metadata','-1','-movflags','+faststart',
+        'output.mp4'
+      ];
+      outName = base+'_enhanced.mp4';
+
+    } else {
+      // hevc mode
+      setStatus('Converting to H.265 (HEVC) — same resolution, smaller file…');
+      // crf 24 = visually near-lossless for H.265, preset medium
+      args = [
+        '-i','input.mp4',
+        '-c:v','libx265','-crf','24','-preset','medium',
+        '-tag:v','hvc1',          // Apple/TikTok HEVC compatibility tag
+        '-c:a','copy',
+        '-map_metadata','-1','-movflags','+faststart',
+        'output.mp4'
+      ];
+      outName = base+'_h265.mp4';
+    }
+
+    await ffmpeg.run(...args);
+
+    setStatus('Reading result…');
+    const data = ffmpeg.FS('readFile','output.mp4');
+    const before = pickedFile.size, after = data.length;
+    const saved = (((before-after)/before)*100).toFixed(1);
+    const blob = new Blob([data.buffer],{type:mimeType});
+    const url = URL.createObjectURL(blob);
+    const dl = document.getElementById('dlBtn');
+    dl.href = url; dl.download = outName;
+
+    // cleanup
+    try{ffmpeg.FS('unlink','input.mp4')}catch(e){}
+    try{ffmpeg.FS('unlink','output.mp4')}catch(e){}
+
+    document.getElementById('fill').style.width = '100%';
+    const sizeInfo = after < before
+      ? ' · saved '+saved+'%'
+      : '';
+    setStatus('<span style="color:var(--green)">✓ Done. '+(before/1048576).toFixed(1)+' MB → '+(after/1048576).toFixed(1)+' MB'+sizeInfo+'</span>');
+
+    document.getElementById('doneTitle').textContent = currentMode === 'hevc' ? '✓ CONVERTED' : '✓ OPTIMIZED';
+    document.getElementById('doneMsg').innerHTML = doneMsgs[currentMode];
+    document.getElementById('doneBox').style.display = 'block';
+    document.getElementById('bar').style.display = 'none';
+    try{ffmpeg.exit()}catch(e){}
+
+  } catch(err) {
+    const msg = String(err.message||err);
+    setStatus('<span style="color:#ff6b6b">✗ '+msg.slice(0,200)+'</span>');
+    if(/memory|allocate|SharedArrayBuffer/i.test(msg))
+      document.getElementById('memWarn').style.display = 'block';
+    document.getElementById('fill').style.width = '0%';
+  }
+  document.getElementById('runBtn').disabled = false;
+}
+
+// ── HELPERS ────────────────────────────────────────────
+function setStatus(html){ document.getElementById('status').innerHTML = html; }
+
+function resetUI() {
+  pickedFile = null;
+  if(document.getElementById('fi')) document.getElementById('fi').value = '';
+  document.getElementById('runBtn').disabled = true;
+  document.getElementById('metaRow').style.display = 'none';
+  document.getElementById('doneBox').style.display = 'none';
+  document.getElementById('bar').style.display = 'none';
+  document.getElementById('fill').style.width = '0%';
+  document.getElementById('log').style.display = 'none';
+  document.getElementById('log').innerHTML = '';
+  document.getElementById('memWarn').style.display = 'none';
+  setStatus('Waiting for video…');
+}
+
+document.getElementById('resetBtn').onclick = resetUI;
+
+// ── FAQ ────────────────────────────────────────────────
+const faqs = [
+  ['Does my video get uploaded to a server?',
+   'No. Everything runs inside your browser via WebAssembly. Your video never leaves your device.'],
+  ['Which mode should I use for TikTok?',
+   'Start with <b>Original Engine</b> — fastest, no quality loss. If TikTok still compresses heavily, try <b>Enhanced Engine</b> for a sharper source before upload.'],
+  ['What does Enhanced actually change?',
+   'It applies an unsharp mask (edge sharpening) and a mild contrast + saturation boost before TikTok re-encodes it. The idea: give TikTok a crisper source so the compressed output still looks good.'],
+  ['When should I use H.265 Convert?',
+   'When you want to save storage or upload faster. H.265 gives the same visual quality at roughly half the file size. Good for YouTube too. Note: some older Android devices and apps may not play H.265.'],
+  ['Why is Enhanced mode slow?',
+   'Enhanced re-encodes the entire video stream, which is heavy work for a browser. A 1-minute 4K video can take 5–15 minutes on mobile. Desktop Chrome is much faster.'],
+  ['Can I edit the video after optimizing?',
+   'No. Any edit inside TikTok (trim, sound, filter) will trigger a re-encode and undo the optimization. Upload and post the file exactly as downloaded.'],
+  ['What export settings before optimizing?',
+   'Export at maximum resolution (1080p or 4K), 60 FPS, 10–30 Mbps bitrate. The higher your source quality, the better the result after TikTok compression.']
+];
+
+document.getElementById('faqList').innerHTML = faqs.map(([q,a]) =>
+  `<div class="faq-item"><button class="faq-q">${q}<span class="chev">+</span></button><div class="faq-a"><p>${a}</p></div></div>`
+).join('');
+
+document.querySelectorAll('.faq-q').forEach(b => b.onclick = () => {
+  const it = b.parentElement, a = it.querySelector('.faq-a'), open = it.classList.contains('open');
+  document.querySelectorAll('.faq-item.open').forEach(o => {
+    o.classList.remove('open'); o.querySelector('.faq-a').style.maxHeight = 0;
+  });
+  if(!open){ it.classList.add('open'); a.style.maxHeight = a.scrollHeight+'px'; }
+});
+</script>
+</body>
+</html>
